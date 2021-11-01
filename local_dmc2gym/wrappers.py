@@ -99,6 +99,7 @@ class DMCWrapper(core.Env):
         # background
         self._bg_source = None
         if distract_type or background_dataset_path:
+            difficulty = 'easy' if difficulty is None else difficulty
             shape2d = (height, width)
             if distract_type == 'color':
                 self._bg_source = background_source.RandomColorSource(shape2d)

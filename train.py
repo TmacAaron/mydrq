@@ -40,12 +40,26 @@ def make_env(cfg):
 
     # env = suite.load(
     #       domain_name, task_name, difficulty='easy', background_dataset_path='../DAVIS/JPEGImages/480p/')
+    try:
+    	distract_type = cfg.distract_type
+    except:
+    	distract_type = None
+
+    try:
+    	difficulty = cfg.difficulty
+    except:
+    	difficulty = None
+
+    try : 
+    	background_dataset_path = cfg.background_dataset_path
+    except:
+    	background_dataset_path = None
 
     env = dmc2gym.make(domain_name=domain_name,
                        task_name=task_name,
-                       distract_type=cfg.distract_type,
-                       difficulty=cfg.difficulty,
-                       background_dataset_path=cfg.background_dataset_path,
+                       distract_type=distract_type,
+                       difficulty=difficulty,
+                       background_dataset_path=background_dataset_path,
                        seed=cfg.seed,
                        visualize_reward=False,
                        from_pixels=True,
