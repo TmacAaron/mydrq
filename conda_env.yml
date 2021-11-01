@@ -4,8 +4,6 @@ channels:
 dependencies:
   - python=3.7
   - pip
-  - pytorch
-  - cudatoolkit
   - absl-py
   - pyparsing
   - jupyterlab
@@ -19,8 +17,8 @@ dependencies:
     - pandas
     - ipdb
     - tqdm
-    - torchvision
     - yapf
     - sklearn
     - matplotlib
     - kornia
+    - git+git://github.com/facebookresearch/hydra@0.11_branch
