@@ -1,5 +1,5 @@
 # mydrq
-Added a distracting background based on the source code
+Added a distracting background based on the drq source code
 
 
 ## Requirements
