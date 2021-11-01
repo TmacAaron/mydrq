@@ -8,7 +8,7 @@ from local_dmc2gym import background_source
 def _spec_to_box(spec):
     def extract_min_max(s):
         assert s.dtype == np.float64 or s.dtype == np.float32
-        dim = np.int(np.prod(s.shape))
+        dim = np.int_(np.prod(s.shape))
         if type(s) == specs.Array:
             bound = np.inf * np.ones(dim, dtype=np.float32)
             return -bound, bound
@@ -43,6 +43,7 @@ class DMCWrapper(core.Env):
         distract_type=None,
         difficulty=None,
         background_dataset_path=None,
+        train_or_val=None,
         task_kwargs=None,
         visualize_reward={},
         from_pixels=False,
@@ -106,9 +107,9 @@ class DMCWrapper(core.Env):
             elif distract_type == 'noise':
                 self._bg_source = background_source.NoiseSource(shape2d)
             elif distract_type == "images":
-                self._bg_source = background_source.RandomImageSource(shape2d, difficulty, background_dataset_path)
+                self._bg_source = background_source.RandomImageSource(shape2d, difficulty, background_dataset_path, train_or_val)
             elif distract_type == "videos" or background_dataset_path:
-                self._bg_source = background_source.RandomVideoSource(shape2d, difficulty, background_dataset_path)
+                self._bg_source = background_source.RandomVideoSource(shape2d, difficulty, background_dataset_path, train_or_val)
             else:
                 raise Exception("distract_type %s not defined." % distract_type)
 
