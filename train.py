@@ -17,6 +17,7 @@ import utils
 from logger import Logger
 from replay_buffer import ReplayBuffer
 from video import VideoRecorder
+from tqdm import tqdm
 
 # from distracting_control import suite
 
@@ -41,23 +42,30 @@ def make_env(cfg):
     # env = suite.load(
     #       domain_name, task_name, difficulty='easy', background_dataset_path='../DAVIS/JPEGImages/480p/')
     try:
-    	distract_type = cfg.distract_type
+        distract_type = cfg.distract_type
     except:
-    	distract_type = None
+        distract_type = None
 
     try:
-    	difficulty = cfg.difficulty
+        difficulty = cfg.difficulty
     except:
-    	difficulty = None
+        difficulty = None
 
-    try : 
-    	background_dataset_path = cfg.background_dataset_path
+    try: 
+        background_dataset_path = cfg.background_dataset_path
     except:
-    	background_dataset_path = None
+        background_dataset_path = None
+
+    try:
+        ground = cfg.ground
+    except:
+        ground = None
+
 
     env = dmc2gym.make(domain_name=domain_name,
                        task_name=task_name,
                        distract_type=distract_type,
+                       ground=ground,
                        difficulty=difficulty,
                        background_dataset_path=background_dataset_path,
                        seed=cfg.seed,
@@ -114,7 +122,8 @@ class Workspace(object):
 
     def evaluate(self):
         average_episode_reward = 0
-        for episode in range(self.cfg.num_eval_episodes):
+        bar = tqdm(range(self.cfg.num_eval_episodes), desc='EVAL')
+        for episode in bar:
             obs = self.env.reset()
             self.video_recorder.init(enabled=(episode == 0))
             done = False
@@ -127,6 +136,7 @@ class Workspace(object):
                 self.video_recorder.record(self.env)
                 episode_reward += reward
                 episode_step += 1
+                bar.set_postfix(ep_r=f'{episode_reward:.3f}', step=episode_step)
 
             average_episode_reward += episode_reward
             self.video_recorder.save(f'{self.step}.mp4')
@@ -138,7 +148,7 @@ class Workspace(object):
     def run(self):
         episode, episode_reward, episode_step, done = 0, 0, 1, True
         start_time = time.time()
-        while self.step < self.cfg.num_train_steps:
+        for _ in tqdm(range(self.cfg.num_train_steps)):
             if done:
                 if self.step > 0:
                     self.logger.log('train/duration',

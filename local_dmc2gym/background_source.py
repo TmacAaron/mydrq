@@ -115,7 +115,8 @@ class RandomImageSource(ImageSource):
 
 
 class RandomVideoSource(ImageSource):
-    def __init__(self, shape, difficulty, date_path, train_or_val=None):
+    def __init__(self, shape, difficulty, date_path, train_or_val=None, ground=None):
+        self.ground = ground
         self.shape = shape
         self.image_paths = get_img_paths(difficulty, date_path, train_or_val)
         self.num_path = len(self.image_paths)
@@ -124,23 +125,34 @@ class RandomVideoSource(ImageSource):
         self.build_bg_arr()
 
     def build_bg_arr(self):
-        image_path = self.image_paths[self._loc]
-        self.image_files = os.listdir(image_path)
+        self.image_path = self.image_paths[self._loc]
+        self.image_files = os.listdir(self.image_path)
         self.bg_arr = np.zeros((len(self.image_files), self.shape[0], self.shape[1], 3))
         for i, fname in enumerate(self.image_files):
-            fpath = os.path.join(image_path, fname)
+            fpath = os.path.join(self.image_path, fname)
             img = cv2.imread(fpath, cv2.IMREAD_COLOR)
+            if self.ground == 'forground':
+                mpath = fpath.replace("JPEGImages", "Annotations").replace("jpg", "png")
+                mask = cv2.imread(mpath, cv2.IMREAD_GRAYSCALE)
+                mask = np.logical_not(mask)
+                img[mask] = 0
             self.bg_arr[i] = cv2.resize(img, (self.shape[1], self.shape[0]))
 
     def reset(self):
         self._loc = np.random.randint(0, self.num_path)
 
-    def get_image(self, shape=None):
+    def get_image(self, obs):
         if self.idx == len(self.image_files):
             self.reset()
             self.build_bg_arr()
             self.idx = 0
         self.bg = self.bg_arr[self.idx]
+        self.bg = cv2.resize(self.bg, (obs.shape[1], obs.shape[0]))
+        if self.ground == 'forground':
+            mask = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2]> 0)
+            obs[mask] = self.bg[mask]
+        else:
+            mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))
+            obs[mask] = self.bg[mask]
         self.idx += 1
-        self.bg = cv2.resize(self.bg, shape) if shape else self.bg
-        return self.bg
+        return obs

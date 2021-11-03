@@ -41,6 +41,7 @@ class DMCWrapper(core.Env):
         domain_name,
         task_name,
         distract_type=None,
+        ground=None,
         difficulty=None,
         background_dataset_path=None,
         train_or_val=None,
@@ -109,7 +110,7 @@ class DMCWrapper(core.Env):
             elif distract_type == "images":
                 self._bg_source = background_source.RandomImageSource(shape2d, difficulty, background_dataset_path, train_or_val)
             elif distract_type == "videos" or background_dataset_path:
-                self._bg_source = background_source.RandomVideoSource(shape2d, difficulty, background_dataset_path, train_or_val)
+                self._bg_source = background_source.RandomVideoSource(shape2d, difficulty, background_dataset_path, train_or_val, ground)
             else:
                 raise Exception("distract_type %s not defined." % distract_type)
 
@@ -190,7 +191,5 @@ class DMCWrapper(core.Env):
         obs = self._env.physics.render(height=height, width=width, camera_id=camera_id)
         # change background
         if self._bg_source:
-            mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))
-            bg = self._bg_source.get_image((width, height))
-            obs[mask] = bg[mask]
+            obs = self._bg_source.get_image(obs)
         return obs

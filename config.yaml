@@ -29,6 +29,7 @@ lr: 1e-3
 # IMPORTANT: please use a batch size of 512 to reproduce the results in the paper. Hovewer, with a smaller batch size it still works well.
 batch_size: 128
 # background path and diffculty
+ground: 'forground'
 distract_type: 'videos' # 'color', 'noise', 'images', 'videos'
 difficulty: 'hard' # 'easy', 'medium', 'hard'
 background_dataset_path: 'D:/python/DAVIS/JPEGImages/480p/' # path to backgroud iamge files(use DAVIS Dataset)
