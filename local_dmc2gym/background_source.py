@@ -127,8 +127,8 @@ class RandomVideoSource(ImageSource):
     def build_bg_arr(self):
         self.image_path = self.image_paths[self._loc]
         self.image_files = os.listdir(self.image_path)
-        self.bg_arr = np.zeros((len(self.image_files), self.shape[0], self.shape[1], 3))
-        for i, fname in enumerate(self.image_files):
+        self.bg_arr = []
+        for fname in self.image_files:
             fpath = os.path.join(self.image_path, fname)
             img = cv2.imread(fpath, cv2.IMREAD_COLOR)
             if self.ground == 'forground':
@@ -136,7 +136,7 @@ class RandomVideoSource(ImageSource):
                 mask = cv2.imread(mpath, cv2.IMREAD_GRAYSCALE)
                 mask = np.logical_not(mask)
                 img[mask] = 0
-            self.bg_arr[i] = cv2.resize(img, (self.shape[1], self.shape[0]))
+            self.bg_arr.append(img)
 
     def reset(self):
         self._loc = np.random.randint(0, self.num_path)
