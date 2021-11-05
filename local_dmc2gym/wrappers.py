@@ -107,6 +107,8 @@ class DMCWrapper(core.Env):
                 self._bg_source = background_source.RandomColorSource(shape2d)
             elif distract_type == 'noise':
                 self._bg_source = background_source.NoiseSource(shape2d)
+            elif distract_type == 'dots':
+                self._bg_source = background_source.RandomDotsSource(shape2d, difficulty, ground)
             elif distract_type == "images":
                 self._bg_source = background_source.RandomImageSource(shape2d, difficulty, background_dataset_path, train_or_val)
             elif distract_type == "videos" or background_dataset_path:
