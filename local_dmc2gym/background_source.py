@@ -68,7 +68,7 @@ class RandomColorSource(ImageSource):
         self._color = np.random.randint(0, 256, size=(3,))
         self.bg[:, :] = self._color
 
-    def get_iamge(self, obs):
+    def get_image(self, obs):
         self.bg = cv2.resize(self.bg, (obs.shape[1], obs.shape[0]))
         mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))
         obs[mask] = self.bg[mask]
@@ -89,70 +89,72 @@ class NoiseSource(ImageSource):
 
 
 class RandomDotsSource(ImageSource):
-	def __init__(self, shape, difficulty, ground=None):
-		self.shape = shape
-		num_dots = utils.DIFFICULTY_NUM_VIDEOS[difficulty]
-		self.num_dots = num_dots if num_dots else 16
-		self.num_frames = 1000
-		self.ground = ground
-		self.reset()
+    def __init__(self, shape, difficulty, ground=None):
+        self.shape = shape
+        num_dots = utils.DIFFICULTY_NUM_VIDEOS[difficulty]
+        self.num_dots = num_dots if num_dots else 16
+        self.num_frames = 1000
+        self.ground = ground
+        self.lim_low = 0.1
+        self.lim_high = 0.9
+        self.reset()
 
-	def reset(self):
-		self.idx = 0
-		self.colors = []
-		self.positions = []
-		self.sizes = []
-		self.move = []
-		for i in range(self.num_dots):
-			self.colors.append(np.random.rand(3))
-			self.positions.append(np.random.uniform(0.15, 0.85, 2))
-			self.sizes.append(np.random.uniform(0.5, 1))
-			self.move.append([0, 0])
+    def reset(self):
+        self.idx = 0
+        self.colors = []
+        self.positions = []
+        self.sizes = []
+        self.move = []
+        for i in range(self.num_dots):
+            self.colors.append(np.random.rand(3))
+            self.positions.append(np.random.uniform(self.lim_low, self.lim_high, 2))
+            self.sizes.append(np.random.uniform(0.5, 1))
+            self.move.append([0, 0])
 
-	def limit_pos(self, i):
-		if self.positions[i][0] < 0:
-			self.positions[i][0] = 0
-			self.move[i][0] = 0
-		elif self.positions[i][0] > 1:
-			self.positions[i][0] = 1
-			self.move[i][0] = 0
-		if self.positions[i][1] < 0:
-			self.positions[i][1] = 0
-			self.move[i][1] = 0
-		elif self.positions[i][1] > 1:
-			self.positions[i][1] = 1
-			self.move[i][1] = 0
+    def limit_pos(self, i):
+        if self.positions[i][0] < self.lim_low:
+            self.positions[i][0] = self.lim_low
+            self.move[i][0] = 0
+        elif self.positions[i][0] > self.lim_high:
+            self.positions[i][0] = self.lim_high
+            self.move[i][0] = 0
+        if self.positions[i][1] < self.lim_low:
+            self.positions[i][1] = self.lim_low
+            self.move[i][1] = 0
+        elif self.positions[i][1] > self.lim_high:
+            self.positions[i][1] = self.lim_high
+            self.move[i][1] = 0
 
-	def build_bg(self, w, h):
-		self.bg = np.zeros((h, w, 3))
-		for i in range(self.num_dots):
-			color, position, size = self.colors[i], self.positions[i], self.sizes[i]
-			position = (int(position[0]*w), int(position[1]*h))
-			cv2.circle(self.bg, position, int(size*w/20), color, -1)
-			self.move[i] = np.random.normal(self.move[i], 0.01, 2)
-			self.move[i] = self.move[i] if np.random.rand() < 0.8 else self.move[i]/5
-			self.positions[i] += self.move[i]
-			self.limit_pos(i)
-			self.colors[i] += np.random.normal(1/255, 0.005, 3)
-		self.bg *= 255
-		self.bg = self.bg.astype(np.uint8)
+    def build_bg(self, w, h):
+        self.bg = np.zeros((h, w, 3))
+        for i in range(self.num_dots):
+            color, position, size = self.colors[i], self.positions[i], self.sizes[i]
+            position = (int(position[0] * w), int(position[1] * h))
+            cv2.circle(self.bg, position, int(size * w / 20), color, -1)
+            self.move[i] = np.random.normal(self.move[i], 0.01, 2)
+            self.move[i] = self.move[i] if np.random.rand() < 0.8 else self.move[i] / 5
+            self.positions[i] += self.move[i]
+            self.limit_pos(i)
+            self.colors[i] += np.random.normal(1 / 255, 0.005, 3)
+        self.bg *= 255
+        self.bg = self.bg.astype(np.uint8)
 
-	def get_image(self, obs):
-		if self.idx == self.num_frames:
-			self.reset()
-		h, w, _ = obs.shape
-		self.build_bg(w, h)
-		
-		if self.ground == 'forground':
-			mask = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2]> 0)
-			obs[mask] = self.bg[mask]
-		else:
-			mask1 = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2]> 0)
-			mask2 = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))
-			mask = np.logical_and(mask1, mask2)
-			obs[mask] = self.bg[mask]
-		self.idx += 1
-		return obs
+    def get_image(self, obs):
+        if self.idx == self.num_frames:
+            self.reset()
+        h, w, _ = obs.shape
+        self.build_bg(w, h)
+
+        if self.ground == 'forground':
+            mask = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2] > 0)
+            obs[mask] = self.bg[mask]
+        else:
+            mask1 = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2] > 0)
+            mask2 = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))
+            mask = np.logical_and(mask1, mask2)
+            obs[mask] = self.bg[mask]
+        self.idx += 1
+        return obs
 
 
 class RandomImageSource(ImageSource):
@@ -208,9 +210,9 @@ class RandomVideoSource(ImageSource):
             self.bg_arr.append(img)
 
     def reset(self):
-    	self.idx = 0
-    	self._loc = np.random.randint(0, self.num_path)
-    	self.build_bg_arr()
+        self.idx = 0
+        self._loc = np.random.randint(0, self.num_path)
+        self.build_bg_arr()
 
     def get_image(self, obs):
         if self.idx == len(self.image_files):
@@ -218,7 +220,7 @@ class RandomVideoSource(ImageSource):
         self.bg = self.bg_arr[self.idx]
         self.bg = cv2.resize(self.bg, (obs.shape[1], obs.shape[0]))
         if self.ground == 'forground':
-            mask = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2]> 0)
+            mask = np.logical_or(self.bg[:, :, 0] > 0, self.bg[:, :, 1] > 0, self.bg[:, :, 2] > 0)
             obs[mask] = self.bg[mask]
         else:
             mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))

@@ -30,9 +30,9 @@ lr: 1e-3
 batch_size: 128
 # background path and diffculty
 ground: 'forground'
-distract_type: 'videos' # 'color', 'noise', 'images', 'videos'
+distract_type: 'dots' # 'color', 'noise', 'images', 'videos'
 difficulty: 'hard' # 'easy', 'medium', 'hard'
-background_dataset_path: 'D:/python/DAVIS/JPEGImages/480p/' # path to backgroud iamge files(use DAVIS Dataset)
+# background_dataset_path: 'D:/python/DAVIS/JPEGImages/480p/' # path to backgroud iamge files(use DAVIS Dataset)
 
 # agent configuration
 agent:
